@@ -1,3 +1,6 @@
+
+
+Modify Jeopardy Game for Custom Content
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -81,3 +84,472 @@
     <script src="script.js"></script>
 </body>
 </html>
+
+can you modify this code to allow the user to create their own categories, add questions and save those inputs
+I'll modify the code to allow users to create custom categories and questions. Here's the updated HTML with a setup screen for creating custom Jeopardy content:
+
+html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jeopardy Game</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .hidden {
+            display: none;
+        }
+        .category-setup {
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .question-input {
+            margin-bottom: 10px;
+        }
+        button {
+            cursor: pointer;
+            padding: 8px 15px;
+            margin: 5px;
+        }
+        #game-board {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .category {
+            background-color: #060CE9;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .question-value {
+            background-color: #060CE9;
+            color: #FFCC00;
+            padding: 15px 0;
+            text-align: center;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            width: 80%;
+            max-width: 600px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Game Mode Selection Screen -->
+        <div id="mode-screen">
+            <h1>Jeopardy Game</h1>
+            <button id="play-default">Play Default Game</button>
+            <button id="create-custom">Create Custom Game</button>
+            <button id="play-custom">Play Custom Game</button>
+        </div>
+
+        <!-- Custom Game Creation Screen -->
+        <div id="create-screen" class="hidden">
+            <h1>Create Custom Jeopardy Game</h1>
+            <div id="categories-container">
+                <!-- Categories will be added here -->
+            </div>
+            <button id="add-category">Add Category</button>
+            <button id="save-game">Save Custom Game</button>
+            <button id="back-to-mode">Back to Mode Selection</button>
+        </div>
+
+        <!-- Default Game Setup Screen -->
+        <div id="setup-screen" class="hidden">
+            <h1>Jeopardy Game Setup</h1>
+            <div id="player-inputs">
+                <div class="player-input">
+                    <label for="player1">Player 1 Name:</label>
+                    <input type="text" id="player1" placeholder="Enter name">
+                </div>
+                <div class="player-input">
+                    <label for="player2">Player 2 Name:</label>
+                    <input type="text" id="player2" placeholder="Enter name">
+                </div>
+                <div class="player-input">
+                    <label for="player3">Player 3 Name:</label>
+                    <input type="text" id="player3" placeholder="Enter name">
+                </div>
+            </div>
+            <button id="start-game">Start Game</button>
+            <button id="back-to-mode-from-setup">Back to Mode Selection</button>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game-screen" class="hidden">
+            <div class="header">
+                <h1>Jeopardy!</h1>
+                <div class="timer-container">
+                    <div id="timer">30</div>
+                </div>
+            </div>
+            
+            <div class="scoreboard">
+                <div class="player-score" id="score1">
+                    <span class="player-name"></span>: <span class="points">0</span>
+                </div>
+                <div class="player-score" id="score2">
+                    <span class="player-name"></span>: <span class="points">0</span>
+                </div>
+                <div class="player-score" id="score3">
+                    <span class="player-name"></span>: <span class="points">0</span>
+                </div>
+            </div>
+
+            <div id="game-board"></div>
+
+            <div id="question-modal" class="modal hidden">
+                <div class="modal-content">
+                    <h2 id="category-name"></h2>
+                    <h3 id="question-value"></h3>
+                    <p id="question-text"></p>
+                    <div id="answer-section">
+                        <input type="text" id="player-answer" placeholder="Your answer...">
+                        <button id="submit-answer">Submit Answer</button>
+                    </div>
+                    <div id="result-section" class="hidden">
+                        <p id="correct-answer"></p>
+                        <div class="result-buttons">
+                            <button class="correct" data-player="1">Player 1 Correct</button>
+                            <button class="correct" data-player="2">Player 2 Correct</button>
+                            <button class="correct" data-player="3">Player 3 Correct</button>
+                            <button class="incorrect">All Incorrect</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="end-screen" class="hidden">
+            <h1>Game Over!</h1>
+            <div id="final-scores"></div>
+            <button id="play-again">Play Again</button>
+            <button id="back-to-mode-from-end">Back to Mode Selection</button>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const modeScreen = document.getElementById('mode-screen');
+        const createScreen = document.getElementById('create-screen');
+        const setupScreen = document.getElementById('setup-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const endScreen = document.getElementById('end-screen');
+        
+        // Mode selection buttons
+        document.getElementById('play-default').addEventListener('click', () => {
+            modeScreen.classList.add('hidden');
+            setupScreen.classList.remove('hidden');
+        });
+        
+        document.getElementById('create-custom').addEventListener('click', () => {
+            modeScreen.classList.add('hidden');
+            createScreen.classList.remove('hidden');
+        });
+        
+        document.getElementById('play-custom').addEventListener('click', () => {
+            const customGame = JSON.parse(localStorage.getItem('customJeopardyGame'));
+            if (!customGame || customGame.categories.length === 0) {
+                alert('No custom game found or game is empty. Please create a game first.');
+                return;
+            }
+            modeScreen.classList.add('hidden');
+            setupScreen.classList.remove('hidden');
+        });
+        
+        // Back buttons
+        document.getElementById('back-to-mode').addEventListener('click', () => {
+            createScreen.classList.add('hidden');
+            modeScreen.classList.remove('hidden');
+        });
+        
+        document.getElementById('back-to-mode-from-setup').addEventListener('click', () => {
+            setupScreen.classList.add('hidden');
+            modeScreen.classList.remove('hidden');
+        });
+        
+        document.getElementById('back-to-mode-from-end').addEventListener('click', () => {
+            endScreen.classList.add('hidden');
+            modeScreen.classList.remove('hidden');
+        });
+
+        // Custom game creation
+        const categoriesContainer = document.getElementById('categories-container');
+        const addCategoryBtn = document.getElementById('add-category');
+        
+        addCategoryBtn.addEventListener('click', () => {
+            const categoryId = Date.now();
+            const categoryHTML = `
+                <div class="category-setup" data-category-id="${categoryId}">
+                    <div class="category-input">
+                        <label>Category Name:</label>
+                        <input type="text" class="category-name" placeholder="Enter category name">
+                    </div>
+                    <div class="questions-container">
+                        <div class="question-input">
+                            <label>Question 1 (100 points):</label>
+                            <input type="text" class="question-text" placeholder="Question text">
+                            <input type="text" class="question-answer" placeholder="Correct answer">
+                        </div>
+                        <div class="question-input">
+                            <label>Question 2 (200 points):</label>
+                            <input type="text" class="question-text" placeholder="Question text">
+                            <input type="text" class="question-answer" placeholder="Correct answer">
+                        </div>
+                        <div class="question-input">
+                            <label>Question 3 (300 points):</label>
+                            <input type="text" class="question-text" placeholder="Question text">
+                            <input type="text" class="question-answer" placeholder="Correct answer">
+                        </div>
+                        <div class="question-input">
+                            <label>Question 4 (400 points):</label>
+                            <input type="text" class="question-text" placeholder="Question text">
+                            <input type="text" class="question-answer" placeholder="Correct answer">
+                        </div>
+                        <div class="question-input">
+                            <label>Question 5 (500 points):</label>
+                            <input type="text" class="question-text" placeholder="Question text">
+                            <input type="text" class="question-answer" placeholder="Correct answer">
+                        </div>
+                    </div>
+                    <button class="remove-category">Remove Category</button>
+                </div>
+            `;
+            categoriesContainer.insertAdjacentHTML('beforeend', categoryHTML);
+            
+            // Add event listener to the remove button
+            const categoryElement = categoriesContainer.querySelector(`[data-category-id="${categoryId}"]`);
+            categoryElement.querySelector('.remove-category').addEventListener('click', () => {
+                categoryElement.remove();
+            });
+        });
+        
+        // Save custom game
+        document.getElementById('save-game').addEventListener('click', () => {
+            const categories = [];
+            const categoryElements = categoriesContainer.querySelectorAll('.category-setup');
+            
+            categoryElements.forEach(categoryElement => {
+                const categoryName = categoryElement.querySelector('.category-name').value;
+                if (!categoryName) return;
+                
+                const questions = [];
+                const questionElements = categoryElement.querySelectorAll('.question-input');
+                
+                questionElements.forEach((questionElement, index) => {
+                    const questionText = questionElement.querySelector('.question-text').value;
+                    const answer = questionElement.querySelector('.question-answer').value;
+                    const value = (index + 1) * 100;
+                    
+                    if (questionText && answer) {
+                        questions.push({
+                            text: questionText,
+                            answer: answer,
+                            value: value
+                        });
+                    }
+                });
+                
+                if (questions.length > 0) {
+                    categories.push({
+                        name: categoryName,
+                        questions: questions
+                    });
+                }
+            });
+            
+            if (categories.length >= 5) {
+                const customGame = { categories };
+                localStorage.setItem('customJeopardyGame', JSON.stringify(customGame));
+                alert('Game saved successfully!');
+            } else {
+                alert('Please create at least 5 complete categories (with all questions filled) to save the game.');
+            }
+        });
+
+        // Game logic (simplified for this example)
+        document.getElementById('start-game').addEventListener('click', () => {
+            const player1 = document.getElementById('player1').value || 'Player 1';
+            const player2 = document.getElementById('player2').value || 'Player 2';
+            const player3 = document.getElementById('player3').value || 'Player 3';
+            
+            document.querySelector('#score1 .player-name').textContent = player1;
+            document.querySelector('#score2 .player-name').textContent = player2;
+            document.querySelector('#score3 .player-name').textContent = player3;
+            
+            setupScreen.classList.add('hidden');
+            gameScreen.classList.remove('hidden');
+            
+            // Load the appropriate game (default or custom)
+            const gameMode = document.getElementById('play-custom').classList.contains('active') ? 'custom' : 'default';
+            initializeGame(gameMode);
+        });
+        
+        function initializeGame(mode) {
+            const gameBoard = document.getElementById('game-board');
+            gameBoard.innerHTML = '';
+            
+            let gameData;
+            if (mode === 'custom') {
+                const savedGame = localStorage.getItem('customJeopardyGame');
+                gameData = savedGame ? JSON.parse(savedGame) : getDefaultGameData();
+            } else {
+                gameData = getDefaultGameData();
+            }
+            
+            // Create category headers
+            gameData.categories.forEach(category => {
+                const categoryElement = document.createElement('div');
+                categoryElement.className = 'category';
+                categoryElement.textContent = category.name;
+                gameBoard.appendChild(categoryElement);
+            });
+            
+            // Create question cells
+            for (let i = 0; i < 5; i++) { // 5 questions per category
+                gameData.categories.forEach(category => {
+                    const question = category.questions[i];
+                    const questionElement = document.createElement('div');
+                    questionElement.className = 'question-value';
+                    questionElement.textContent = question.value;
+                    questionElement.addEventListener('click', () => {
+                        showQuestion(category.name, question);
+                    });
+                    gameBoard.appendChild(questionElement);
+                });
+            }
+        }
+        
+        function showQuestion(categoryName, question) {
+            document.getElementById('category-name').textContent = categoryName;
+            document.getElementById('question-value').textContent = `$${question.value}`;
+            document.getElementById('question-text').textContent = question.text;
+            document.getElementById('correct-answer').textContent = `Correct answer: ${question.answer}`;
+            
+            const modal = document.getElementById('question-modal');
+            modal.classList.remove('hidden');
+            
+            document.getElementById('submit-answer').addEventListener('click', () => {
+                document.getElementById('answer-section').classList.add('hidden');
+                document.getElementById('result-section').classList.remove('hidden');
+            });
+        }
+        
+        function getDefaultGameData() {
+            return {
+                categories: [
+                    {
+                        name: "History",
+                        questions: [
+                            { text: "This country was home to the ancient Mayan civilization", answer: "Mexico", value: 100 },
+                            { text: "This war lasted from 1914 to 1918", answer: "World War I", value: 200 },
+                            { text: "He was the first president of the United States", answer: "George Washington", value: 300 },
+                            { text: "This ancient wonder was located in Alexandria, Egypt", answer: "The Lighthouse of Alexandria", value: 400 },
+                            { text: "This document was signed in 1215 limiting the power of English monarchs", answer: "Magna Carta", value: 500 }
+                        ]
+                    },
+                    {
+                        name: "Science",
+                        questions: [
+                            { text: "This is the chemical symbol for gold", answer: "Au", value: 100 },
+                            { text: "This planet is known as the Red Planet", answer: "Mars", value: 200 },
+                            { text: "This force keeps us grounded on Earth", answer: "Gravity", value: 300 },
+                            { text: "This is the largest organ in the human body", answer: "Skin", value: 400 },
+                            { text: "This element has the atomic number 1", answer: "Hydrogen", value: 500 }
+                        ]
+                    },
+                    // Add more default categories as needed
+                ]
+            };
+        }
+        
+        // Close modal when correct/incorrect is selected
+        document.querySelectorAll('.correct, .incorrect').forEach(button => {
+            button.addEventListener('click', () => {
+                document.getElementById('question-modal').classList.add('hidden');
+                // Reset modal for next use
+                document.getElementById('answer-section').classList.remove('hidden');
+                document.getElementById('result-section').classList.add('hidden');
+                document.getElementById('player-answer').value = '';
+            });
+        });
+        
+        // Play again button
+        document.getElementById('play-again').addEventListener('click', () => {
+            endScreen.classList.add('hidden');
+            setupScreen.classList.remove('hidden');
+        });
+    </script>
+</body>
+</html>
+This updated code includes:
+
+A new mode selection screen where users can choose to:
+
+Play the default game
+
+Create a custom game
+
+Play a saved custom game
+
+A custom game creation interface where users can:
+
+Add multiple categories
+
+For each category, add 5 questions with corresponding answers and point values (100-500)
+
+Remove categories they don't want
+
+Save the custom game to localStorage
+
+The ability to load and play saved custom games
+
+Navigation between all screens with back buttons
+
+Key features:
+
+All custom game data is saved to the browser's localStorage
+
+Users must create at least 5 complete categories to save a game
+
+The game board dynamically generates based on the selected game mode (default or custom)
+
+The question display and answer submission works the same way for both default and custom games
+
+The styling is included directly in the HTML for simplicity, but you could move it to the external CSS file if preferred.
+
+To use this:
+
+Click "Create Custom Game" to build your own Jeopardy board
+
+Add categories and fill in all questions/answers
+
+Click "Save Custom Game" when finished
+
+Go back to the mode selection and click "Play Custom Game" to play your creation
+
+New chat
+Message DeepSeek
+AI-generated, for reference only
